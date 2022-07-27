@@ -1,5 +1,5 @@
 ## 说明  
-这个插件是基于其他大佬的插件照葫芦画瓢写的出刀记录图片版,针对Hoshinobot+Yobot的用户  
+这个插件是基于其他大佬的插件照葫芦画瓢写的出刀记录图片版兼代刀提醒功能,针对Hoshinobot+Yobot的用户  
 项目fork自2佬的代刀提醒插件，最近捡起来修了下bug  
 原先是加在后面，有用户建议分离开所以最后修修代码弄出来，关于代刀提醒部分我也不是很懂有问题去问2佬（   
 本插件使用[GLWTPL(Good Luck With That Public License)](https://github.com/me-shaon/GLWTPL)开源，即： 
