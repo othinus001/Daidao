@@ -13,6 +13,7 @@ import hoshino
 from hoshino import Service, priv
 from hoshino.typing import CQEvent
 import copy
+import re
 import json
 import nonebot
 from nonebot import on_command, on_request,MessageSegment
@@ -37,6 +38,12 @@ jindu_bt_color="#2b4490"#进度表标题颜色，不懂？百度颜色表
 jindu_bg_color="#48a6fb"#进度表表格 背景颜色
 jindu_wz_color="#fff"#进度表表格 文字颜色
 jindu_bk_color="#181d4b"#进度表表格 边框颜色
+'''黑白风格
+jindu_bt_color="#2b4490"#进度表标题颜色
+jindu_bg_color="#3e4145"#进度表表格 背景颜色
+jindu_wz_color="#fffffb"#进度表表格 文字颜色
+jindu_bk_color="#d3d7d4"#进度表表格 边框颜色
+'''
 def get_db_path():
     if not (os.path.isfile(os.path.abspath(os.path.join(os.path.dirname(__file__), "../"
                                                         "yobot/yobot/src/client/yobot_data/yobotdata.db"))) or os.access(os.path.abspath(os.path.join(os.path.dirname(__file__), "../"
@@ -62,7 +69,7 @@ def get_web_address():
 
 yobot_url = get_web_address()
 if not yobot_url:
-    yobot_url = '' 
+    yobot_url = '' #如果非hoshino插件版请填写yobot_config上的链接
     # 获取主页地址：在群内向bot发送指令“手册”，复制bot发送的链接地址，删除末尾的manual/后即为主页地址
     # 例:https://域名/目录/或http://IP地址:端口号/目录/,注意不要漏掉最后的斜杠！
 
@@ -195,7 +202,10 @@ async def get_boss_HP(gid:str) -> str:
     session = aiohttp.ClientSession()
     async with session.get(url) as resp:
         data = await resp.json()
-        boss_hp = data["challenges"][-1]["health_ramain"]  # 获取最后一刀的boss血量
+        if  data["challenges"]!=[]:
+            boss_hp = data["challenges"][-1]["health_ramain"]  # 获取最后一刀的boss血量
+        else:
+            boss_hp=6000000
         if boss_hp == 0:
            boss_hp=data["groupinfo"][-1]["now_full_health"]
         return boss_hp
@@ -474,7 +484,8 @@ class DAICounter:
         except:
             raise Exception('查找uid表发生错误')
 
-
+    
+        
 @sv.on_rex(r'^(代刀中?|开始代刀) ?$')
 async def kakin(bot, ev: CQEvent):
     dai = DAICounter()
@@ -529,15 +540,6 @@ async def baodao(bot, ev: CQEvent):
     dai = DAICounter()
     gid = ev.group_id
     num = 0
-    daoz= await get_daoz(gid)
-    Zhou = daoz[0]
-    Hao = daoz[1]
-    HP = daoz[2]
-    if HP == 0:
-       Hao += 1
-       if Hao == 6:
-          Hao = 1
-          Zhou +=1
     for m in ev.message:
         if m.type == 'at' and m.data['qq'] != 'all':
             uid = int(m.data['qq'])
@@ -622,14 +624,6 @@ async def weidao(bot, ev: CQEvent):
             msgGS += f"[CQ:at,qq={uid}]"
         if msgGS != "挂树的下来吧:\n":
             await bot.send(ev, msgGS)
-    daoz= await get_daoz(gid)
-    Zhou = daoz[0]
-    Hao = daoz[1]
-    HP = daoz[2]
-    Hao += 1
-    if Hao == 6:
-       Hao = 1
-       Zhou +=1
     for m in ev.message:
         if m.type == 'at' and m.data['qq'] != 'all':
             uid = int(m.data['qq'])
@@ -654,15 +648,6 @@ async def weidao(bot, ev: CQEvent):
     if num == 0:
         uid = ev.user_id
         dai._delete_DAIDAO_owner(gid,uid)
-        daoz= await get_daoz(gid)
-        Zhou = daoz[0]
-        Hao = daoz[1]
-        HP = daoz[2]
-        if HP == 0:
-           Hao += 1
-           if Hao == 6:
-              Hao = 1
-              Zhou +=1
         data = str(f'在{Zhou}周目{Hao}号BOSS收尾')
         dai._set_BC_owner(gid,uid,data)
       
@@ -1212,8 +1197,70 @@ async def cddqk(bot,ev):
     imgkit.from_string(html, DAIDAO_jpg_PATH +'out.jpg')
     await bot.send(ev,MessageSegment.image(f'file:///{DAIDAO_jpg_PATH}\\out.jpg'))
     
+@sv.on_prefix(["一穿二"])
+async def ycr(bot, ev):
+    args = ev.message.extract_plain_text().split()    
+    gid = ev.group_id
+    helpmsg="指令如下：\n 一穿二 剩余时间s 目标时间s boss血量(不填默认当前boss) \ns可不填，w视为万，少于一万自动乘万\n例：一穿二 50 80 1000"
+    if not args:
+        await bot.send(ev,  '输入错误！\n'+helpmsg )       
+        return
+    boss_HP = {}
+    if len(args) != 3 and len(args) != 2:
+        await bot.send(ev,  '输入错误！\n'+helpmsg )
+        return
+    if len(args) == 2:
+        boss_HP[gid] = float(await get_boss_HP(gid))
+        c = float(boss_HP[gid])
+        t = args[0].strip('sS')
+        tt = args[1].strip('sS')
+        t = int(t)
+        tt = int(tt)
+        if tt < 0 or tt > 90 or t < 0 or t > 90:
+           msg = "两个数据的情况下必须都为时间，可以不带s,必须在90s内"+helpmsg
+           await bot.send(ev, msg)
+           return
+        if tt -t <= 20:
+           msg = "已经满足条件,现有时间+20s"
+           await bot.send(ev, msg)
+           return
+        bt = c-(110-tt)*c/(90-t)
+        bt = math.ceil(bt)
+        bt = formatNum(bt)
+        msg = f"boss血量为{c}\n当前剩余{t}s,想让此刀达到{tt}s需要垫{bt}伤害\n"
+        await bot.send(ev, msg)
+    if len(args) == 3:
+       c = args[2].replace('w', '0000').replace('W', '0000').replace('万', '0000').split(' ')
+       c = float(''.join(c))
+       t = args[0].strip('sS')
+       tt = args[1].strip('sS')
+       t = int(t)
+       tt = int(tt)
+       if c<10000:
+         c = c*10000
+       if tt < 0 or tt > 90 or t < 0 or t > 90:
+           msg = "两个数据的情况下必须都为时间，可以不带s,必须在90s内" + helpmsg
+           await bot.send(ev, msg)
+           return
+       if tt -t <= 20:
+           msg = "已经满足条件,现有时间+20s"
+           await bot.send(ev, msg)
+           return
+       bt = c - (110 - tt) * c / (90 - t)
+       bt = math.ceil(bt)
+       bt = formatNum(bt)
+       msg = f"boss血量为{c}\n当前剩余{t}s,想让此刀达到{tt}s需要垫{bt}伤害\n"
+       await bot.send(ev, msg)     
        
-
+def formatNum(num):    #伤害万位分割，如1,4567,0000
+    num=str(num)
+    pattern=r'(\d+)(\d{4})((,\d{4})*)'
+    while True:
+        num,count=re.subn(pattern,r'\1,\2\3',num)
+        if count==0:
+            break
+    return num
+    
 @sv.on_prefix(["合刀"])
 async def hedao(bot, ev):
     args = ev.message.extract_plain_text().split()
@@ -1284,7 +1331,7 @@ async def get_daotd(gid:str) -> str:
         f.write(json.dumps(data, indent=4,ensure_ascii=False))
      challenges = data['challenges']
      daotd = {}
-     daote = {}
+     daote = {}#测试用，计算已出刀数
      members = data['members']
      n = '0'
      daots = '0'
@@ -1299,8 +1346,8 @@ async def get_daotd(gid:str) -> str:
        daote[member['qqid']] = 0
        for challenge in challenges:
           try:                                 #这里利用daote，再tryexcept找出出了刀被踢出公会(buyi)的人
-           daote[challenge['qqid']] += 1
            if challenge['challenge_pcrdate'] == n and member['qqid']==challenge['qqid']:
+             daote[challenge['qqid']] += 1
              cdb = str(challenge['damage'])
              qqid = str(challenge['qqid'])
              ic = str(challenge['is_continue'])
@@ -1316,6 +1363,7 @@ async def get_daotd(gid:str) -> str:
            if challenge['challenge_pcrdate'] == n:
              cdb = str(challenge['damage'])
              qqid = str(challenge['qqid'])
+             daote[qqid] += 1
              ic = str(challenge['is_continue'])
              hr = str(challenge["health_ramain"])
              cy = str(challenge["cycle"])
@@ -1326,7 +1374,7 @@ async def get_daotd(gid:str) -> str:
              daotds.append(cy)
              daotds.append(bn)
              daotds.append("???")             
-             daots =challenge['qqid']             
+             daots =challenge['qqid']                  
        if member['sl']==n:sl=True
        daotdu.append(sl) 
        daotd[member['qqid']] = daotdu             #得出字典下数组：【出刀伤害，是否为补偿刀，boss剩余血量，第几周目，几号boss】
@@ -1359,6 +1407,7 @@ async def cddqkj(bot,ev):                   #由代刀表魔改而来，思路�
     table[0][5].attr.colspan = 2
     ta=table.append_header_rows
     n = 0
+    print('nnnnnnnnnnnnnnnnnnnnnnnnnnn')
     for qq in dao:                                                                          #别问，问就是穷举
         try:
             name = (await bot.get_group_member_info(group_id=ev.group_id,user_id=qq))['card']
@@ -1538,7 +1587,6 @@ async def cddqkj(bot,ev):                   #由代刀表魔改而来，思路�
     body = table.to_html()
     # html的charset='UTF-8'必须加上，否则中午会乱码
     html = "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body>{0}</body></html>".format(body)
-    #tb.add_row([name,str(dao[qq]), str(dai[qq]), str(dao[qq]+dai[qq])])
     imgkit.from_string(html, DAIDAO_jpg_PATH +'out.jpg')
     await bot.send(ev,MessageSegment.image(f'file:///{DAIDAO_jpg_PATH}\\out.jpg'))
     
