@@ -19,10 +19,11 @@
 2.代挂树私聊   
 3.代SL私聊   
 4.记录暂停伤害     
-5.记录锁助战情况
+5.记录锁助战情况  
 6.不用登录网页也能看出刀记录/代刀记录  
 7.一键提醒所有未出刀的取代@全体  
-8.合刀一穿二计算，优点是当前boss不用填血量  
+8.合刀一穿二计算，优点是当前boss不用填血量，别人写的太复杂了只好自己写了
+### 如果你使用了其他插件的相同功能插件，自己删除插件里涉及的，应该没有人不会吧。。 
 
 使用方法是：  
 
@@ -51,7 +52,7 @@
 
 # 安装方法：  
 yobot源码版用户：  
-1.复制daidao.py到modules\daidao\后在_bot_.py中开启（如果你不需要代刀提醒功能复制jingdu.py到modules\jingdu\  
+1.复制daidao.py到modules\daidao\后在_bot_.py中开启（如果你不需要代刀提醒功能复制jingdu.py到modules\jingdu\（两个py用一个就行了，后者只是移除代刀功能的  
 2.pip install imgkit和pip install html-table两个依赖  
 3.安装wkhtmltopdf,安装完要把安装路径/bin加进环境变量，下载可以去 [官网](https://wkhtmltopdf.org/downloads.html)或 [这个链接（不保证安全，只是给小白看教程）](http://www.pc6.com/softview/SoftView_559241.html)  用的两台windows测的，linux没试过，不过也有这个软件应该差不多? 
 提供从官网下的windous（其他自己去官网下）百度网盘链接：链接：https://pan.baidu.com/s/1b3TMcS_XR-ps7Jm6O5e_Hg 提取码：ratz    
