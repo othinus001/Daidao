@@ -58,7 +58,7 @@ yobot源码版用户：
 提供从官网下的windous（其他自己去官网下）百度网盘链接：链接：https://pan.baidu.com/s/1b3TMcS_XR-ps7Jm6O5e_Hg 提取码：ratz    
 4.将battle.py放进yobot\src\client\ybplugins\clan_battle\ 其实没改只是最后加了个方法，因为每个人都有修改，
 所以强烈建议不要替换，直接复制粘贴最后一段!!!!!   
-5.如果你是hoshino缝合yobot，不用动；如果你的yobot是独立版，在daidao.py填写你的yobot_url
+5.如果你是hoshino缝合yobot插件，不用动；如果你的yobot是独立版，在daidao.py填写你的yobot_url
 （非yobot源码版用户前往master分支，不用做第四步，由于无法获取部分数据，公会第一天看不到谁一刀没出，非公会代刀者需加入公会并报刀0才有代刀表，进度表也看不到谁没sl ）  
 
 #### 当前更新内容
