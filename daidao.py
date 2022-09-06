@@ -79,7 +79,7 @@ if not DB_PATH:
     # 例：C:/Hoshino/hoshino/modules/yobot/yobot/src/client/yobot_data/yobotdata.db
     # 注意斜杠方向！！！
     #
-Version = '0.8.1'  
+Version = '0.8.2'  
 # 检查客户端版本
 
 async def get_user_card(bot, group_id, user_id):
@@ -89,14 +89,6 @@ async def get_user_card(bot, group_id, user_id):
             return m['card'] if m['card']!='' else m['nickname']
     return str(user_id)
 
-async def get_group_sv(gid:str) -> str:
-    apikey = get_apikey(gid)
-    url = f'{yobot_url}clan/{gid}/statistics/api/?apikey={apikey}'
-    session = aiohttp.ClientSession()
-    async with session.get(url) as resp:
-        data = await resp.json()
-        server = data["groupinfo"][-1]["game_server"]  # 获取服务器
-        return server
 
 def get_apikey(gid:str) -> str:
     # 获取apikey
@@ -175,40 +167,11 @@ class RecordDAO:
         return
 db = RecordDAO(DAIDAO_DB_PATH)
 
-async def get_boss_Zhou(gid:str) -> str:
 
-    apikey = get_apikey(gid)
-    url = f'{yobot_url}clan/{gid}/statistics/api/?apikey={apikey}'
-    session = aiohttp.ClientSession()
-    async with session.get(url) as resp:
-        data = await resp.json()
-        Zhou = data["challenges"][-1]["cycle"]  # 获取Boss周目
-        return Zhou
 
-async def get_boss_Hao(gid:str) -> str:
 
-    apikey = get_apikey(gid)
-    url = f'{yobot_url}clan/{gid}/statistics/api/?apikey={apikey}'
-    session = aiohttp.ClientSession()
-    async with session.get(url) as resp:
-        data = await resp.json()
-        Hao = data["challenges"][-1]["boss_num"]  # 获取Boss号
-        return Hao
 
-async def get_boss_HP(gid:str) -> str:
 
-    apikey = get_apikey(gid)
-    url = f'{yobot_url}clan/{gid}/daidao/api/?apikey={apikey}'
-    session = aiohttp.ClientSession()
-    async with session.get(url) as resp:
-        data = await resp.json()
-        if  data["challenges"]!=[]:
-            boss_hp = data["challenges"][-1]["health_ramain"]  # 获取最后一刀的boss血量
-        else:
-            boss_hp=6000000
-        if boss_hp == 0:
-           boss_hp=data["groupinfo"][-1]["now_full_health"]
-        return boss_hp
 
 class DAICounter:
     def __init__(self):
@@ -604,6 +567,9 @@ async def search_kakin(bot, ev: CQEvent):
 async def weidao(bot, ev: CQEvent):
     dai = DAICounter()
     gid = ev.group_id
+    daoz= await get_daoz(gid)
+    Zhou = daoz[0]
+    Hao = daoz[1]
     num = 0
     #kill = 0
     umlist = dai._get_SH_uid_list(gid)
@@ -1080,6 +1046,7 @@ async def get_dao(gid:str) -> str:
     session = aiohttp.ClientSession()
     async with session.get(url) as resp:
         data = await resp.json()
+    await session.close()  # 在原先代码的前面加上await就没有警告了
     with open(os.path.join(os.path.dirname(__file__),f"data.json"), "w", encoding='utf-8') as f:
         f.write(json.dumps(data, indent=4,ensure_ascii=False))
     challenges = data['challenges']
@@ -1110,6 +1077,7 @@ async def get_dai(gid:str) -> str:
     session = aiohttp.ClientSession()
     async with session.get(url) as resp:
         data = await resp.json()
+    await session.close()  # 在原先代码的前面加上await就没有警告了
     with open(os.path.join(os.path.dirname(__file__),f"data.json"), "w", encoding='utf-8') as f:
         f.write(json.dumps(data, indent=4,ensure_ascii=False))
     challenges = data['challenges']
@@ -1121,7 +1089,9 @@ async def get_dai(gid:str) -> str:
         if challenge['is_continue'] == False:
             num = 1
         else:
-            num = 0
+            num = 0.5
+        if challenge['health_ramain'] == 0:
+            num = 0.5
         if challenge['damage'] == 0:
             continue
         if challenge['behalf'] == None:
@@ -1137,8 +1107,11 @@ async def get_dai(gid:str) -> str:
 @sv.on_fullmatch('代刀表')
 async def cddqk(bot,ev):
     gid = ev.group_id
-    dao = await get_dao(gid)
-    dai = await get_dai(gid)
+    try:
+      dao = await get_dao(gid)
+      dai = await get_dai(gid)
+    except:
+      return
     table = HTMLTable(caption='代刀表')
     # 表头行
     table.append_header_rows((
@@ -1186,7 +1159,7 @@ async def cddqk(bot,ev):
     'font-size': '15px',})
     
     for row in table.iter_data_rows():
-      introw = int(row[2].value)  
+      introw = float(row[2].value)  
       if introw > 10: #看看哪些人被代的多
          row.set_style({
              'background-color': '#ffdddd',})
@@ -1323,10 +1296,10 @@ async def hedao(bot, ev):
 async def get_daotd(gid:str) -> str:
      apikey = get_apikey(gid)
      url = f'{yobot_url}clan/{gid}/daidao/api/?apikey={apikey}'
-     print(apikey)
      session = aiohttp.ClientSession()
      async with session.get(url) as resp:
         data = await resp.json()
+     await session.close()  # 在原先代码的前面加上await就没有警告了
      with open(os.path.join(os.path.dirname(__file__),f"data.json"), "w", encoding='utf-8') as f:
         f.write(json.dumps(data, indent=4,ensure_ascii=False))
      challenges = data['challenges']
@@ -1590,12 +1563,29 @@ async def cddqkj(bot,ev):                   #由代刀表魔改而来，思路�
     imgkit.from_string(html, DAIDAO_jpg_PATH +'out.jpg')
     await bot.send(ev,MessageSegment.image(f'file:///{DAIDAO_jpg_PATH}\\out.jpg'))
     
+async def get_boss_HP(gid:str) -> str:
+
+    apikey = get_apikey(gid)
+    url = f'{yobot_url}clan/{gid}/daidao/api/?apikey={apikey}'
+    session = aiohttp.ClientSession()
+    async with session.get(url) as resp:
+        data = await resp.json()
+        if  data["challenges"]!=[]:
+            boss_hp = data["challenges"][-1]["health_ramain"]  # 获取最后一刀的boss血量
+        else:
+            boss_hp=6000000
+        if boss_hp == 0:
+           boss_hp=data["groupinfo"][-1]["now_full_health"]
+    await session.close()  # 在原先代码的前面加上await就没有警告了
+    return boss_hp
+        
 async def get_daoz(gid:str) -> str:                  
     apikey = get_apikey(gid)
     url = f'{yobot_url}clan/{gid}/daidao/api/?apikey={apikey}'
     session = aiohttp.ClientSession()
     async with session.get(url) as resp:
         data = await resp.json()
+    await session.close()  # 在原先代码的前面加上await就没有警告了
     with open(os.path.join(os.path.dirname(__file__),f"data.json"), "w", encoding='utf-8') as f:
         f.write(json.dumps(data, indent=4,ensure_ascii=False))
     challenges = data['challenges']
@@ -1646,15 +1636,9 @@ async def txwcd(bot,ev):                   #由代刀表魔改而来，思路一
     if not hoshino.priv.check_priv(ev, hoshino.priv.ADMIN):
         await bot.send(ev,message = '仅限管理可用',at_sender = True)
         return
-    dao = await get_daotd(gid) 
-    
+    dao = await get_daotd(gid)  
     msgTX = "未出完刀的来出刀了:\n"
-    for qq in dao:                                                                          #别问，问就是穷举
-        try:
-            name = (await bot.get_group_member_info(group_id=ev.group_id,user_id=qq))['nickname']
-        except:
-            name = f'qq{qq}'
-            continue
+    for qq in dao:                          #别问，问就是穷举
         if len(dao[qq])==1:
            msgTX += f"[CQ:at,qq={qq}]"            
         if len(dao[qq])==6:
@@ -1677,3 +1661,16 @@ async def txwcd(bot,ev):                   #由代刀表魔改而来，思路一
           if str(dao[qq][22]) == '0' and str(dao[qq][21]) == 'False': 
              msgTX += f"[CQ:at,qq={qq}]"
     await bot.send(ev, msgTX)
+
+@sv.on_prefix(('@公会成员','提醒公会成员'))
+async def change_zhanghao(bot, ev: CQEvent):
+    args = ev.message.extract_plain_text()
+    gid = ev.group_id
+    if not hoshino.priv.check_priv(ev, hoshino.priv.ADMIN):
+        await bot.send(ev,message = '仅限管理可用',at_sender = True)
+        return
+    dao = await get_daotd(gid) 
+    args = f"{args}\n"
+    for qq in dao:                                                                          #别问，问就是穷举
+        args += f"[CQ:at,qq={qq}]"
+    await bot.send(ev, args)
