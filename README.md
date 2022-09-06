@@ -16,6 +16,7 @@
 ##### 修复尾刀代刀不正常问题，这么重要一直没人提，只能说代刀难道真的没人用？  
 ##### 增加新功能@公会成员 想说的话，因为我公会退坑的多为了不影响其他人  
 ##### 修复进度表代刀表会使日志出现一堆长长的丑不拉几的反馈  
+##### 移除jingdu.py,考虑到功能完全不影响，不用也可以留着
 
 ### 新的版本已经完全重构了，改动如下  
 - 使用数据库存储代刀数据，重启不再丢失数据  
@@ -61,7 +62,7 @@
 
 # 安装方法：  
 yobot源码版用户：  
-1.复制daidao.py到modules\daidao\后在_bot_.py中开启（如果你不需要代刀提醒功能复制jingdu.py到modules\jingdu\（两个py用一个就行了，后者只是移除代刀功能的  
+1.复制daidao.py到modules\daidao\后在_bot_.py中开启   
 2.pip install imgkit和pip install html-table两个依赖  
 3.安装wkhtmltopdf,安装完要把安装路径/bin加进系统环境变量的path下面，下载可以去 [官网](https://wkhtmltopdf.org/downloads.html)或 [这个链接（不保证安全，只是给小白看教程）](http://www.pc6.com/softview/SoftView_559241.html)  用的两台windows测的，linux没试过，不过也有这个软件应该差不多? 
 提供从官网下的windous（其他自己去官网下）百度网盘链接：链接：https://pan.baidu.com/s/1b3TMcS_XR-ps7Jm6O5e_Hg 提取码：ratz    
