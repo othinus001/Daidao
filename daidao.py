@@ -1372,7 +1372,7 @@ async def cddqkj(bot,ev):                   #由代刀表魔改而来，思路�
     daozz = daoz[3]                           
     daozs = 90 - daozz
     sl=''
-    table = HTMLTable(caption=f'进度表 已出{daozz}刀,还剩{daozs}刀 当前状态{c}-{b}-({h}/{hz}) 指令"提醒未出刀"内测中')
+    table = HTMLTable(caption=f'进度表 已出{daozz}刀,还剩{daozs}刀 当前状态{c}-{b}-({h}/{hz}) 新增指令"提醒未出刀""@公会成员 想说的话"')
     table.append_header_rows((
     ("名字", "第一刀", "", "第二刀", "","第三刀","","是否sl"),))
     table[0][1].attr.colspan = 2
@@ -1665,6 +1665,8 @@ async def txwcd(bot,ev):                   #由代刀表魔改而来，思路一
 @sv.on_prefix(('@公会成员','提醒公会成员'))
 async def change_zhanghao(bot, ev: CQEvent):
     args = ev.message.extract_plain_text()
+    if args=='':
+       args='公会成员来看看'
     gid = ev.group_id
     if not hoshino.priv.check_priv(ev, hoshino.priv.ADMIN):
         await bot.send(ev,message = '仅限管理可用',at_sender = True)
